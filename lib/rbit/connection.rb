@@ -1,4 +1,5 @@
 require 'rbit/logger'
+require 'rbit/hash_matching'
 
 require 'socket'
 require 'openssl'
@@ -30,11 +31,33 @@ module Rbit
       @handlers = {}
     end
 
-    def add_handler(op, handler)
-      @logger.debug "Adding handler for #{op}: #{handler}"
+    def add_handler(pattern, handler)
+      @logger.debug "Adding handler for #{pattern}: #{handler}"
 
-      @handlers[op] ||= []
-      @handlers[op] << handler
+      @handlers[pattern] ||= []
+      @handlers[pattern] << handler
+    end
+
+    def remove_handler(pattern, handler)
+      @logger.debug "Removing handler for #{pattern}: #{handler}"
+
+      @handlers[pattern].delete(handler) if @handlers[pattern]
+    end
+
+    def clear_handlers(pattern)
+      @logger.debug "Clearing handlers for #{pattern}"
+
+      @handlers[pattern] = []
+    end
+
+    def emit(event, *data)
+      @handlers.each do |pattern, handlers|
+        next unless pattern === event
+        handlers.each do |handler|
+          @logger.debug "Spawning handler for #{pattern}: #{handler}"
+          Thread.new { handler[*data] }
+        end
+      end
     end
 
     def send(packet)
@@ -55,9 +78,7 @@ module Rbit
 
         @logger.in packet
 
-        @handlers.fetch(packet[:op], []).each do |handler|
-          Thread.new { handler[self, packet] }
-        end
+        emit(packet, packet)
       end
     end
 
