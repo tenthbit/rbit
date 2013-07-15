@@ -11,12 +11,11 @@ module Rbit
       @tcp_socket = TCPSocket.new(host, port)
 
       ssl_context = OpenSSL::SSL::SSLContext.new
-      ssl_context.npn_select_cb = proc do |protos|
-        # TODO: Log somewhere what protocols are supported?
-        unless protos.include? PROTOCOL
-          raise ProtocolError, "Server does not support protocol #{PROTOCOL}"
+      if ssl_context.respond_to?(:npn_select_cb=) # Only available in Ruby 2.0
+        ssl_context.npn_select_cb = proc do |protos|
+          raise ProtocolError, "Server does not support protocol #{PROTOCOL}" unless protos.include? PROTOCOL
+          PROTOCOL
         end
-        PROTOCOL
       end
       @ssl_socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, ssl_context)
     end
