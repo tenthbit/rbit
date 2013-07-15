@@ -28,6 +28,11 @@ module Rbit
       @handlers[op] << handler
     end
 
+    def send(packet)
+      raw_packet = JSON.dump(packet)
+      @ssl_socket.puts(raw_packet)
+    end
+
     def run
       @ssl_socket.connect
 
