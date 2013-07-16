@@ -52,10 +52,11 @@ module Rbit
 
     def emit(event, *data)
       @handlers.each do |pattern, handlers|
-        next unless pattern === event
+        match = pattern === event
+        next unless match
         handlers.each do |handler|
           @logger.debug "Spawning handler for #{pattern}: #{handler}"
-          Thread.new { handler[*data] }
+          Thread.new { handler[*data, *match] }
         end
       end
     end
