@@ -17,7 +17,8 @@ module Rbit
       self.formatter = proc do |level, time, prefix, msg|
         prefix ||= Paint['--', :yellow]
         color = COLORS[level]
-        Paint['[', color, :bright] + time.asctime + Paint[']', color, :bright] + " #{prefix} #{msg}\n"
+        t = time.strftime('%Y-%m-%d %H:%M:%S.%L')
+        Paint['[', color, :bright] + t + Paint[']', color, :bright] + " #{prefix} #{msg}\n"
       end
     end
 
